@@ -1,0 +1,17 @@
+sudo: required
+dist: xenial
+
+services:
+  - docker
+
+git:
+  depth: 5
+
+jobs:
+  include:
+    - stage: build codementality/centos7-core image
+      script:
+      - docker build -f ./core/Dockerfile -t centos7-core ./core/.
+      - docker tag centos7-core codementality/centos7-core:latest
+      - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+      - docker push codementality/centos7-core:latest

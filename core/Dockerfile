@@ -1,6 +1,5 @@
 FROM centos:7
 
-
 ENV SUMMARY="Base CentOS-7 image."
 
 LABEL summary="$SUMMARY" \
@@ -9,7 +8,6 @@ LABEL summary="$SUMMARY" \
       maintainer="Lisa Ridley <lisa@codementality.com>"
 
 ENV \
-    # DEPRECATED: Use above LABEL instead, because this will be removed in future versions.
     # Path to be used in other layers to place s2i scripts into
     STI_SCRIPTS_PATH=/usr/libexec/s2i \
     APP_ROOT=/opt/app-root \
@@ -23,6 +21,9 @@ ENV \
 ENV BASH_ENV=${APP_ROOT}/etc/scl_enable \
     ENV=${APP_ROOT}/etc/scl_enable \
     PROMPT_COMMAND=". ${APP_ROOT}/etc/scl_enable"
+
+# Copy update repo to image.
+COPY CentOS-CR.repo /etc/yum.repos.d/CentOS-CR.repo
 
 # This is the list of basic dependencies that all language container image can
 # consume.
@@ -47,6 +48,8 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
 
 # Copy extra files to the image.
 COPY ./root/ /
+# Copy update repo to image.
+COPY CentOS-CR.repo /etc/yum.repos.d/CentOS-CR.repo
 
 # Directory with the sources is set as the working directory so all STI scripts
 # can execute relative to this path.
@@ -56,7 +59,10 @@ ENTRYPOINT ["container-entrypoint"]
 CMD ["base-usage"]
 
 # Reset permissions of modified directories and add default user
-RUN rpm-file-permissions && \
-  useradd -u 1001 -r -g 0 -d ${HOME} -s /sbin/nologin \
-      -c "Default Application User" default && \
-  chown -R 1001:0 ${APP_ROOT}
+RUN yum update -y \
+    && yum install -y epel-release yum-utils \
+    && yum clean all && rm -rf /var/cache/yum \
+    && rpm-file-permissions \
+    && useradd -u 1001 -r -g 0 -d ${HOME} -s /sbin/nologin \
+      -c "Non-root Default Application User" default \
+    && chown -R 1001:0 ${APP_ROOT}

@@ -15,3 +15,9 @@ jobs:
       - docker tag centos7-core codementality/centos7-core:latest
       - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
       - docker push codementality/centos7-core:latest
+    - stage: build codementality/centos7-base image
+      script:
+      - docker build -f ./base/Dockerfile -t centos7-base ./base/.
+      - docker tag centos7-base codementality/centos7-base:latest
+      - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+      - docker push codementality/centos7-base:latest
